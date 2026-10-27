@@ -11,8 +11,16 @@
 #include <Wire.h> //I2C communication library
 
 // Server information
-const char* loginUrl = "https://192.168.0.19/user/signin";
-const char* sensorUrl = "https://192.168.0.19/event/new";
+const char* loginUrl = "https://192.168.0.26/user/signin";
+const char* sensorUrl = "https://192.168.0.26/event/new";
+
+// Sensor models
+const char* HUMIDITY_SENSOR = "dht11";
+const char* TEMPERATURE_SENSOR = "dht11";
+const char* RELATIVE_PRESSURE_SENSOR = "bmp180";
+const char* ABS_PRESSURE_SENSOR = "bmp180";
+const char* PPM_SENSOR = "mq-135";
+const char* RAIN_READING_SENSOR = "mh-rd yl-83";
 
 BearSSL::WiFiClientSecure client;
 String accessToken;
@@ -182,12 +190,21 @@ bool sendSensorData(
   // JSON document with readings
   JsonDocument doc;
 
+  // Sensor readings
   doc["humidity"] = u;
   doc["temperature"] = t;
   doc["relative_pressure"] = relative_pressure;
   doc["abs_pressure"] = abs_pressure;
   doc["ppm"] = ppm;
   doc["rain_reading"] = rainReading;
+
+  // Sensor models
+  doc["humidity_sensor"] = HUMIDITY_SENSOR;
+  doc["temperature_sensor"] = TEMPERATURE_SENSOR;
+  doc["relative_pressure_sensor"] = RELATIVE_PRESSURE_SENSOR;
+  doc["abs_pressure_sensor"] = ABS_PRESSURE_SENSOR;
+  doc["ppm_sensor"] = PPM_SENSOR;
+  doc["rain_reading_sensor"] = RAIN_READING_SENSOR;
 
   Serial.println("[SEND] Sending POST request...");
 
@@ -237,9 +254,22 @@ void setup(){
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  while (WiFi.status() != WL_CONNECTED){
-    delay(1000);
-    Serial.println("Connecting to WiFi");
+  unsigned long startAttempt = millis();
+
+  while (WiFi.status() != WL_CONNECTED &&
+        millis() - startAttempt < 20000) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\n[WIFI] Conectado!");
+    Serial.print("[WIFI] IP: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\n[WIFI] Falha na conexao");
+    Serial.print("[WIFI] Status: ");
+    Serial.println(WiFi.status());
   }
 
   Serial.println("WiFi connected");
